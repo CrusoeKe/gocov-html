@@ -28,8 +28,8 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/matm/gocov-html/pkg/config"
-	"github.com/matm/gocov-html/pkg/themes"
+	"github.com/CrusoeKe/gocov-html/pkg/config"
+	"github.com/CrusoeKe/gocov-html/pkg/themes"
 )
 
 func main() {

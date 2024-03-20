@@ -1,8 +1,8 @@
-module github.com/matm/gocov-html
+module github.com/CrusoeKe/gocov-html
 
 go 1.11
 
 require (
-	github.com/axw/gocov v1.1.0
+	github.com/CrusoeKe/gocov v1.0.4
 	github.com/rotisserie/eris v0.5.4
 )

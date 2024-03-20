@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/axw/gocov"
+	"github.com/CrusoeKe/gocov"
 	"github.com/rotisserie/eris"
 )
 
