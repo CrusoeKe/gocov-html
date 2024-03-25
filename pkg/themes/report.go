@@ -29,7 +29,7 @@ type ReportOptions struct {
 	CoverageMin uint8
 	// CoverageMax filters out all functions whose code coverage is greater than it is.
 	CoverageMax uint8
-	// ReportPath
+	// ReportPath is the path to the package report dir.
 	ReportPath string
 }
 
@@ -155,29 +155,34 @@ func printReport(w io.Writer, r *report) error {
 		rv := reportPackage{
 			Pkg: &gocov.Package{Name: "Report Total"},
 		}
-		for _, rp := range reportPackages {
+		for key, rp := range reportPackages {
 			rv.ReachedStatements += rp.ReachedStatements
 			rv.TotalStatements += rp.TotalStatements
+			reportPackages[key].ReachedPercentage = rp.PercentageReached()
+			reportPackages[key].HtmlFilePath = fmt.Sprintf("%s%s.html", r.ReportPath, strings.ReplaceAll(rp.Pkg.Name, "/", "_"))
+			reportPackages[key].Style = data.Style
 		}
-		rv.ReachedPercentage = rv.PercentageReached()
 		data.Overview = &rv
 	}
 
-	origStdout := os.Stdout
+	origStdout := w
 	for _, rp := range data.Packages {
 		// 这个时候是把数据写到了os.Stdout中，所以需要重定向到文件中
 		// 将os.Stdout中的数据重定向到文件中
-		f, err := os.OpenFile(fmt.Sprintf("%s%s.html", r.ReportPath, rp.Pkg.Name), os.O_WRONLY|os.O_CREATE, 0777)
+		f, err := os.OpenFile(rp.HtmlFilePath, os.O_WRONLY|os.O_CREATE, 0777)
 		if err != nil {
-			return eris.Wrap(err, "print report")
+			return eris.Wrap(err, "create package report file failed")
 		}
 		defer f.Close()
-		os.Stdout = f
+		w = f
 
 		// 新建每个包的html文件
 		err = curTheme.PackageTemplate().Execute(w, rp)
+		if err != nil {
+			return eris.Wrap(err, "execute package template")
+		}
 	}
-	os.Stdout = origStdout
+	w = origStdout
 	err = curTheme.Template().Execute(w, data)
 	return eris.Wrap(err, "execute template")
 }
@@ -243,6 +248,8 @@ type reportPackage struct {
 	TotalStatements   int
 	ReachedStatements int
 	ReachedPercentage float64
+	HtmlFilePath      string
+	Style             string
 }
 
 // PercentageReached computes the percentage of reached statements by the tests

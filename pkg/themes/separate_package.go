@@ -16,5 +16,5 @@ func (t separatePackageTheme) Name() string {
 }
 
 func (t separatePackageTheme) Description() string {
-	return "original golang theme"
+	return "original separate theme"
 }
