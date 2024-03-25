@@ -127,6 +127,75 @@ func (t defaultTheme) Template() *template.Template {
 	return p
 }
 
+// TODO kehuishu001
 func (t defaultTheme) PackageTemplate() *template.Template {
-	return nil
+	tmpl := `{{define "theme"}}
+<html>
+	<head>
+		<title>Coverage Report</title>
+		<meta charset="utf-8" />
+        {{if .Style}}
+        <style type="text/css">
+        {{.Style}}
+        </style>
+        {{end}}
+	</head>
+	<body>
+		<div id="doctitle">Package Coverage Report</div>
+        {{if not .Pkg}}
+		<p>no test files in package.</p>
+        {{end}}
+
+        <div id="pkg_{{.Pkg.Name}}" class="funcname">
+            Package Overview: {{.Pkg.Name}}
+            <span class="packageTotal">{{printf "%.1f%%" .ReachedPercentage}}</span>
+        </div>
+        <p>Please select a function to see what's left for testing.</p>
+
+        <table class="overview">
+        {{range $k,$f := .Functions}}
+            <tr id="s_fn_{{$f.Name}}">
+                <td>
+                    <code><a href="#fn_{{$f.Name}}">{{$f.Name}}(...)</a></code>
+                </td>
+                <td>
+                    <code>{{$.Pkg.Name}}/{{$f.ShortFileName}}</code>
+                </td>
+                <td class="percent">
+                    <code>{{printf "%.1f%%" $f.CoveragePercent}}</code>
+                </td>
+                <td class="linecount">
+                    <code>{{$f.StatementsReached}}/{{len $f.Statements}}</code>
+                </td>
+            </tr>
+        {{end}}
+        </table>
+
+        {{/* Functions source code here */}}
+        {{range $k,$f := .Functions}}
+        <div class="funcname" id="fn_{{$f.Name}}">func {{$f.Name}}</div>
+        <div class="info">
+            <a href="#s_fn_{{$f.Name}}">Back</a>
+            <p>In <code>{{$f.File}}</code>:</p>
+        </div>
+        <table class="listing">
+            {{range $p,$info := $f.Lines}}
+            <tr{{if $info.Missed}} class="miss"{{end}}>
+                <td>{{$info.LineNumber}}</td>
+                <td>
+                    <code><pre>{{$info.Code}}</pre></code>
+                </td>
+            </tr>
+            {{end}}
+        </table>
+        {{end}} {{/* range function lines */}}
+
+        <!--    Can be parsed by external script
+                PACKAGE:{{.Pkg.Name}} DONE:{{printf "%.1f" .ReachedPercentage}}
+        -->
+	</body>
+</html>
+{{end}}`
+	p := template.Must(template.New("theme").Parse(tmpl))
+	return p
 }

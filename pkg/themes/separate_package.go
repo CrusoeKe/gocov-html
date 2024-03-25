@@ -2,6 +2,7 @@ package themes
 
 //go:generate ../../generator
 
+// TODO kehuishu001
 type separatePackageTheme struct{}
 
 func (t separatePackageTheme) Assets() StaticAssets {
@@ -16,5 +17,5 @@ func (t separatePackageTheme) Name() string {
 }
 
 func (t separatePackageTheme) Description() string {
-	return "original golang theme"
+	return "original separate theme"
 }

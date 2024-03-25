@@ -30,7 +30,7 @@ type ReportOptions struct {
 	// CoverageMax filters out all functions whose code coverage is greater than it is.
 	CoverageMax uint8
 	// ReportPath
-	ReportPath string
+	ReportPath string // TODO kehuishu001
 }
 
 type report struct {
@@ -138,9 +138,12 @@ func printReport(w io.Writer, r *report) error {
 	}
 	reportPackages := make(reportPackageList, len(r.packages))
 	pkgNames := make([]string, len(r.packages))
+	fmt.Fprintf(os.Stderr, "r.packages len: %v\n", len(r.packages))
 	for i, pkg := range r.packages {
 		reportPackages[i] = buildReportPackage(pkg, r)
 		pkgNames[i] = pkg.Name
+		// TODO kehuishu001
+		fmt.Fprintf(os.Stderr, "pkg.Name: %s\n", pkg.Name)
 	}
 
 	data.Script = string(sc)
@@ -151,33 +154,53 @@ func printReport(w io.Writer, r *report) error {
 		strings.Join(os.Args[1:], " "),
 	)
 
+	fmt.Fprintf(os.Stderr, "data.Packages: %v\n", len(data.Packages))
 	if len(reportPackages) > 1 {
 		rv := reportPackage{
 			Pkg: &gocov.Package{Name: "Report Total"},
 		}
-		for _, rp := range reportPackages {
+		for key, rp := range reportPackages {
+			fmt.Fprintf(os.Stderr, "rp.ReachedStatements: %v\n", rp.ReachedStatements)
 			rv.ReachedStatements += rp.ReachedStatements
 			rv.TotalStatements += rp.TotalStatements
+			reportPackages[key].ReachedPercentage = rp.PercentageReached() // TODO kehuishu001
+			//fmt.Sprintf("%s%s.html", r.ReportPath, rp.HtmlFilePath)
+			reportPackages[key].HtmlFilePath = fmt.Sprintf("%s%s.html", r.ReportPath, strings.ReplaceAll(rp.Pkg.Name, "/", "_"))
+			reportPackages[key].Style = data.Style
+			//	reportPackages[key].Functions[key2].ShortFileNameStr = rf.ShortFileName()
+			//}
 		}
-		rv.ReachedPercentage = rv.PercentageReached()
+		//rv.ReachedPercentage = rv.PercentageReached() // TODO kehuishu001
+		//rv.HtmlFilePath = strings.ReplaceAll(rv.Pkg.Name, "/", "_")
 		data.Overview = &rv
 	}
 
-	origStdout := os.Stdout
+	origStdout := w
 	for _, rp := range data.Packages {
+		fmt.Fprintf(os.Stderr, "Writing report for %s\n", rp.Pkg.Name)
+		fmt.Fprintf(os.Stderr, "rp.HtmlFilePath: %s\n", rp.HtmlFilePath)
 		// 这个时候是把数据写到了os.Stdout中，所以需要重定向到文件中
 		// 将os.Stdout中的数据重定向到文件中
-		f, err := os.OpenFile(fmt.Sprintf("%s%s.html", r.ReportPath, rp.Pkg.Name), os.O_WRONLY|os.O_CREATE, 0777)
+		f, err := os.OpenFile(rp.HtmlFilePath, os.O_WRONLY|os.O_CREATE, 0777)
 		if err != nil {
+			fmt.Fprintf(os.Stderr, "err: %v\n", err.Error())
 			return eris.Wrap(err, "print report")
+		} else {
+			fmt.Fprintf(os.Stderr, "open file success\n")
 		}
 		defer f.Close()
-		os.Stdout = f
+		w = f
 
+		fmt.Fprintf(os.Stderr, "begin write %s.html\n", rp.Pkg.Name)
 		// 新建每个包的html文件
 		err = curTheme.PackageTemplate().Execute(w, rp)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "err: %v\n", err.Error())
+		} else {
+			fmt.Fprintf(os.Stderr, "write %s.html success\n", rp.Pkg.Name)
+		}
 	}
-	os.Stdout = origStdout
+	w = origStdout
 	err = curTheme.Template().Execute(w, data)
 	return eris.Wrap(err, "execute template")
 }
@@ -197,6 +220,9 @@ func HTMLReportCoverage(r io.Reader, opts ReportOptions) error {
 	t0 := time.Now()
 	report := newReport()
 	report.ReportOptions = opts
+
+	// TODO kehuishu001
+	fmt.Fprintf(os.Stderr, "Took %v\n", time.Since(t0))
 
 	// Custom stylesheet?
 	stylesheet := ""
@@ -242,7 +268,9 @@ type reportPackage struct {
 	Functions         reportFunctionList
 	TotalStatements   int
 	ReachedStatements int
-	ReachedPercentage float64
+	ReachedPercentage float64 // TODO kehuishu001
+	HtmlFilePath      string
+	Style             string
 }
 
 // PercentageReached computes the percentage of reached statements by the tests
