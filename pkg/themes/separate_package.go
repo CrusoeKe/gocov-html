@@ -2,7 +2,6 @@ package themes
 
 //go:generate ../../generator
 
-// TODO kehuishu001
 type separatePackageTheme struct{}
 
 func (t separatePackageTheme) Assets() StaticAssets {

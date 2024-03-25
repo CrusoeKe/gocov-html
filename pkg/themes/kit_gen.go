@@ -281,7 +281,7 @@ func (t kitTheme) Template() *template.Template {
 	return p
 }
 
-// TODO kehuishu001
+// TODO kehuishu001 real package template
 func (t kitTheme) PackageTemplate() *template.Template {
 	tmpl := `{{define "theme"}}
 <html>
